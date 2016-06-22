@@ -20,13 +20,32 @@ if(!file.exists("./data/train.csv")){
 library(dplyr)
 library(stringr)
 library(readr)
+library(doSNOW)
+library(foreach)
+
+# Setting multiple cores for parallel calculations.
+cl <- makeCluster(4) # Change to amount of cores to be used.
+registerDoSNOW(cl)
 
 # Setting seed and options.
 set.seed(20062016)
 options(scipen = 999)
+
 
 # Function for splitting strings in a list. 
 ParseSequence <- function(str) {
     return(as.numeric(str_split(str, ",")[[1]]))
 }
 
+Mode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+}
+
+
+x <- train.data %>%
+    rowwise() %>%
+    mutate(new_row = Mode(ParseSequence(Sequence))) %>%
+    select(Id, new_row)
+
+stopCluster(cl) #shutting down de clusters
